@@ -25,20 +25,26 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     // high level UI stuff
     JFrame topLevelFrame;  // top-level JFrame
     GridBagConstraints layoutConstraints = new GridBagConstraints(); // used to control layout
+   
+    // 
     Stack<double[]> sheetHistory = new Stack<>();
+
 
     // widgets which may have listeners and/or values
     private JButton calculateButton;   // Calculate button
+    private JButton undoButton;        // Undo button
     private JButton exitButton;        // Exit button
     private JTextField wagesField;     // Wages text field
     private JTextField loansField;     // Loans text field
     private JTextField otherInField;     // Other income text field
-    private JTextField totalIncomeField; // Total Income field
     private JTextField foodField;     // Food text field
     private JTextField rentField;     // Rent text field
     private JTextField otherOutField;     // Other outgoings text field
     private JTextField subsField;     // Subscriptions text field
+    private JTextField totalIncomeField; // Total Outgoings field
     private JTextField totalOutgoingsField; // Total Outgoings field
+    private JTextField netIncomeField; // Total Outgoings field
+
 
     // constructor - create UI  (dont need to change this)
     public BudgetBase(JFrame frame) {
@@ -52,6 +58,9 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     // will be generated automatically by IntelliJ, Eclipse, etc
     private void initComponents() { 
 
+        sheetHistory.push(new double[] {0, 0, 0, 0, 0, 0, 0});
+        System.out.println(sheetHistory);
+
         // Top row (0) - "INCOME" label
         JLabel incomeLabel = new JLabel("INCOME");
         addComponent(incomeLabel, 0, 0);
@@ -62,16 +71,16 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
         // set up text field for entering wages
         // Could create method to do below (since this is done several times)
-        wagesField = new JTextField("", 10);   // blank initially, with 10 columns
+        wagesField = new JTextField("0.00", 10);   // blank initially, with 10 columns
         wagesField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
-        addComponent(wagesField, 1, 1);   
+        addComponent(wagesField, 1, 1);  
 
         // Row 2 - Loans label followed by loans textbox
         JLabel loansLabel = new JLabel("Loans");
         addComponent(loansLabel, 2, 0);
 
         // set up text box for entering loans
-        loansField = new JTextField("", 10);   // blank initially, with 10 columns
+        loansField = new JTextField("0.00", 10);   // blank initially, with 10 columns
         loansField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         addComponent(loansField, 2, 1); 
 
@@ -80,7 +89,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         addComponent(otherInLabel, 3, 0);
 
         // set up text box for entering other income
-        otherInField = new JTextField("", 10);
+        otherInField = new JTextField("0.00", 10);
         otherInField.setHorizontalAlignment(JTextField.RIGHT);
         addComponent(otherInField, 3, 1);
 
@@ -93,7 +102,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         addComponent(foodLabel, 5, 0);
 
         // set up text box for entering food spending
-        foodField = new JTextField("", 10);
+        foodField = new JTextField("0.00", 10);
         foodField.setHorizontalAlignment(JTextField.RIGHT);
         addComponent(foodField, 5, 1);
                 
@@ -102,7 +111,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         addComponent(rentLabel, 6, 0);
 
         // set up text box for entering rent spending
-        rentField = new JTextField("", 10);
+        rentField = new JTextField("0.00", 10);
         rentField.setHorizontalAlignment(JTextField.RIGHT);
         addComponent(rentField, 6, 1);
         
@@ -111,7 +120,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         addComponent(subsLabel, 7, 0);
 
         // set up text box for entering subscription spending
-        subsField = new JTextField("", 10);
+        subsField = new JTextField("0.00", 10);
         subsField.setHorizontalAlignment(JTextField.RIGHT);
         addComponent(subsField, 7, 1);
         
@@ -119,8 +128,8 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         JLabel otherOutLabel = new JLabel("Other");
         addComponent(otherOutLabel, 8, 0);
 
-        // set up text box for entering other income
-        otherOutField = new JTextField("", 10);
+        // set up text box for entering other outgoings
+        otherOutField = new JTextField("0.00", 10);
         otherOutField.setHorizontalAlignment(JTextField.RIGHT);
         addComponent(otherOutField, 8, 1);
         
@@ -132,18 +141,59 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         totalIncomeField = new JTextField("0", 10);   // 0 initially, with 10 columns
         totalIncomeField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         totalIncomeField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(totalIncomeField, 9, 1);  
+        addComponent(totalIncomeField, 9, 1); 
 
-        // Row 10 - Calculate Button
+        // Row 10 - total outgoings label followed by textbox
+        JLabel totalOutgoingsLabel = new JLabel("Total Outgoings");
+        addComponent(totalOutgoingsLabel, 10, 0);
+
+        // set up text box for displaying total outgoings.  Users cam view, but cannot directly edit it
+        totalOutgoingsField = new JTextField("0", 10);   // 0 initially, with 10 columns
+        totalOutgoingsField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
+        totalOutgoingsField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
+        addComponent(totalOutgoingsField, 10, 1);  
+
+        // Row 11 - net income label followed by textbox
+        JLabel netIncomeLabel = new JLabel("Net Income");
+        addComponent(netIncomeLabel, 11, 0);
+
+        // set up text box for displaying total outgoings.  Users cam view, but cannot directly edit it
+        netIncomeField = new JTextField("0", 10);   // 0 initially, with 10 columns
+        netIncomeField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
+        netIncomeField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
+        addComponent(netIncomeField, 11, 1);  
+
+        // Row 12 - Calculate and Undo Buttons
         calculateButton = new JButton("Calculate");
-        addComponent(calculateButton, 10, 0);  
+        addComponent(calculateButton, 12, 0);  
+        undoButton = new JButton("Undo");
+        addComponent(undoButton, 12, 1);  
 
-        // Row 11 - Exit Button
+        // Row 13 - Exit Button
         exitButton = new JButton("Exit");
-        addComponent(exitButton, 11, 0);  
+        addComponent(exitButton, 13, 0);  
+
+
+        
+        // set up choosers for period of each field
+        JComboBox<String>  wagePeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 1, 2);
+        JComboBox<String>  loanPeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 2, 2);
+        JComboBox<String>  otherInPeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 3, 2);
+        JComboBox<String>  foodPeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 5, 2);
+        JComboBox<String>  rentPeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 6, 2);
+        JComboBox<String>  subsPeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 7, 2);
+        JComboBox<String>  otherOutPeriod= createComboBox(new String[]{"Year", "Month", "Week", "Day"}, 8, 2);
 
         // set up  listeners (in a spearate method)
         initListeners();
+    }
+
+
+    // initialise combo box
+    private JComboBox<String> createComboBox(String[] items, int gridx, int gridy) {
+        JComboBox<String> comboBox = new JComboBox<>(items); 
+        addComponent(comboBox, gridx, gridy);                
+        return comboBox;
     }
 
     // set up listeners
@@ -164,16 +214,119 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             }
         });
 
+        // calculateButton - call calculateTotalIncome() when pressed
+        undoButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                undoAction();
+            }
+        });
+
         // wagesField - update the sheet
+        wagesField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
         wagesField.addFocusListener(new FocusListener() {
             public void focusGained(FocusEvent e) {
-                updateSheet();
+                wagesField.selectAll();
             }
             public void focusLost(FocusEvent e) {
                 updateSheet();
             }
         });
 
+        // loansField - update the sheet
+        loansField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
+        loansField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+                loansField.selectAll();
+            }
+            public void focusLost(FocusEvent e) {
+                updateSheet();
+            }
+        });
+
+        // otherInField - update the sheet
+        otherInField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
+        otherInField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+                otherInField.selectAll();
+            }
+            public void focusLost(FocusEvent e) {
+                updateSheet();
+            }
+        });
+
+        // foodField - update the sheet
+        foodField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
+        foodField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+                foodField.selectAll();
+            }
+            public void focusLost(FocusEvent e) {
+                updateSheet();
+            }
+        });
+
+        // rentField - update the sheet
+        rentField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
+        rentField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+                rentField.selectAll();
+            }
+            public void focusLost(FocusEvent e) {
+                updateSheet();
+            }
+        });
+
+        // subsField - update the sheet
+        subsField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
+        subsField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+                subsField.selectAll();
+            }
+            public void focusLost(FocusEvent e) {
+                updateSheet();
+            }
+        });
+
+        // otherOutField - update the sheet
+        otherOutField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateSheet();
+            }
+        });
+        otherOutField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+                otherOutField.selectAll();
+            }
+            public void focusLost(FocusEvent e) {
+                updateSheet();
+            }
+        });
+
+        
     }
 
     // add a component at specified row and column in UI.  (0,0) is top-left corner
@@ -199,14 +352,14 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         double otherOut = getTextFieldValue(otherOutField);
 
         // clear total field and return if any value is NaN (error)
-        if (Double.isNaN(wages) || Double.isNaN(loans)) {
-            totalIncomeField.setText("");  // clear total income field
-            wages = 0.0;
-            return wages;   // exit method and do nothing
-        }
+        // if (Double.isNaN(wages) || Double.isNaN(loans)) {
+        //     totalIncomeField.setText("");  // clear total income field
+        //     wages = 0.0;
+        //     return wages;   // exit method and do nothing
+        // }
 
         // otherwise calculate total income and update text field
-        double totalIncome = wages + loans + otherIn - (food + rent + subscriptions + otherOut);
+        double totalIncome = wages + loans + otherIn;
         totalIncomeField.setText(String.format("%.2f",totalIncome));  // format with 2 digits after the .
         return totalIncome;
     }
@@ -227,20 +380,57 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         // clear total field and return if any value is NaN (error)
         if (Double.isNaN(wages) || Double.isNaN(loans)) {
             totalIncomeField.setText("");  // clear total income field
-            wages = 0.0;
-            return wages;   // exit method and do nothing
+            return 0.0;   // exit method and do nothing
         }
 
         double[] sheetState = {wages, loans, otherIn, food, rent, subscriptions, otherOut};  // Create a snapshot of the board
+        wagesField.setText(String.format("%.2f", sheetState[0]));
+        loansField.setText(String.format("%.2f", sheetState[1]));
+        otherInField.setText(String.format("%.2f", sheetState[2]));
+        foodField.setText(String.format("%.2f", sheetState[3]));
+        rentField.setText(String.format("%.2f", sheetState[4]));
+        subsField.setText(String.format("%.2f", sheetState[5]));
+        otherOutField.setText(String.format("%.2f", sheetState[6]));
+        
         sheetHistory.push(sheetState);  // Push the snapshot of the board on to the stack
+        System.out.println(sheetState);
+        System.out.println(sheetHistory);
 
-        // otherwise calculate total income and update text field
-        double totalIncome = wages + loans + otherIn - (food + rent + subscriptions + otherOut);
-        totalIncomeField.setText(String.format("%.2f",totalIncome));  // format with 2 digits after the .
+        // otherwise calculate totals and update text field
+        double totalIncome = wages + loans + otherIn;
+        double totalOutgoings = food + rent + subscriptions + otherOut;
+        double netIncome = totalIncome - totalOutgoings;
+
+        totalIncomeField.setText(String.format("%.2f",totalIncome));
+        totalOutgoingsField.setText(String.format("%.2f",totalOutgoings)); 
+        netIncomeField.setText(String.format("%.2f",netIncome)); 
         return totalIncome;
     }
 
-    private void undoAction() {
+
+
+    public void undoAction() {
+        if (sheetHistory.size() > 0) {
+            double[] previousState = sheetHistory.pop();
+            wagesField.setText(String.format("%.2f", previousState[0]));
+            loansField.setText(String.format("%.2f", previousState[1]));
+            otherInField.setText(String.format("%.2f", previousState[2]));
+            foodField.setText(String.format("%.2f", previousState[3]));
+            rentField.setText(String.format("%.2f", previousState[4]));
+            subsField.setText(String.format("%.2f", previousState[5]));
+            otherOutField.setText(String.format("%.2f", previousState[6]));
+
+            double totalIncome = previousState[0] + previousState[1] + previousState[2];
+            double totalOutgoings = previousState[3] + previousState[4] + previousState[5] + previousState[6];
+            double netIncome = totalIncome - totalOutgoings;
+
+            totalIncomeField.setText(String.format("%.2f",totalIncome));
+            totalOutgoingsField.setText(String.format("%.2f",totalOutgoings)); 
+            netIncomeField.setText(String.format("%.2f",netIncome)); 
+        }
+        else {
+            JOptionPane.showMessageDialog(topLevelFrame, "There's no more to undo"); // show error message
+        } 
         
     }
 
