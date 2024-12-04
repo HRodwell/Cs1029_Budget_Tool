@@ -30,8 +30,8 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
    
     // 
     boolean undoIsActive = false;
-    Stack<double[]> sheetHistory = new Stack<>();
-    Stack<String[]> periodsHistory = new Stack<>();
+    public Stack<double[]> sheetHistory = new Stack<>();
+    public Stack<String[]> periodsHistory = new Stack<>();
     String[] periods = {"Year", "Month", "Week"};
     Map<String, Integer> periodsMap = Map.of(
         "Year", 1,
@@ -352,6 +352,8 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         return totalOutgoings;
     }
 
+
+    // call the methods that calculate the totals and update the text fields
     public void calculateAllTotals() {
 
         double totalIncome = calculateTotalIncome();
@@ -361,6 +363,13 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         totalIncomeField.setText(String.format("%.2f",totalIncome));
         totalOutgoingsField.setText(String.format("%.2f",totalOutgoings)); 
         netIncomeField.setText(String.format("%.2f",netIncome)); 
+
+        if (netIncome < 0) {
+            netIncomeField.setForeground(Color.red);
+        }
+        else {
+            netIncomeField.setForeground(Color.black);
+        }
     }
 
     // update totalIncomeField (eg, when Calculate is pressed)
@@ -435,8 +444,8 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
         if (sheetHistory.size() > 1) {
             // Remove the current state
-            double[] currentSheet = sheetHistory.pop();
-            Object[] currentPeriods = periodsHistory.pop();
+            sheetHistory.pop();
+            periodsHistory.pop();
 
             System.out.println("Popped for undo");
             System.out.println(periodsHistory.size());
@@ -495,7 +504,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     }
 
     // return the value to be muliplied by for the selected preiod
-    private int periodMultiplier(JComboBox box) {
+    private int periodMultiplier(JComboBox<String> box) {
         String boxString = box.getSelectedItem().toString();
         switch (boxString) {
             case "Year":
