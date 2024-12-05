@@ -6,9 +6,7 @@ import hamish.BudgetBase;
 
 // Swing imports
 import javax.swing.*;
-import java.awt.event.*;
 import java.util.Stack;
-import java.awt.*;
 
 /**
  * Unit test for simple App.
@@ -32,12 +30,14 @@ public class BudgetBaseTest
     @Test
     public void shouldUndo(){
 
-        // Initialise an instace of budget tool and 
+        // Initialise an instace of budget tool
         JFrame frame = new JFrame();
         BudgetBase bb = new BudgetBase(frame);
         Stack<double[]> testSheetHistory = new Stack<>();
         Stack<String[]> testPeriodsHistrory = new Stack<>();
 
+
+        // create some test data
         testSheetHistory.push(new double[] {300, 0, 0, 0, 0, 0, 0});
         testSheetHistory.push(new double[] {300, 0, 0, 0, 0, 0, 0});
         testSheetHistory.push(new double[] {300, 800, 0, 0, 0, 0, 0});
@@ -62,23 +62,26 @@ public class BudgetBaseTest
         testPeriodsHistrory.push(new String[] {"Week", "Month", "Year", "Week", "Month", "Month", "Year"});
         testPeriodsHistrory.push(new String[] {"Week", "Month", "Year", "Week", "Month", "Month", "Year"});
 
+        // inject the data
         bb.sheetHistory = testSheetHistory;  
         bb.periodsHistory = testPeriodsHistrory;
-
-        // 
 
         // perform first undo and check that totals are as expected
         bb.undoAction();
         assertArrayEquals(testPeriodsHistrory.peek(), bb.periodsHistory.peek());
         assertArrayEquals(testSheetHistory.peek(), bb.sheetHistory.peek());
-        assertEquals(300*52 + 800*12 + 0*12, bb.calculateTotalIncome());  
-        assertEquals(70*52 + 450*12 + 12.99*12 + 0*12, bb.calculateTotalOutgoings());  
+        assertEquals(300*52 + 800*12 + 0*1, bb.calculateTotalIncome());  
+        assertEquals(70*52 + 450*12 + 12.99*12 + 0*1, bb.calculateTotalOutgoings());  
 
-        
+        // perform another 5 and check again
+        bb.undoAction();
+        bb.undoAction();
+        bb.undoAction();
+        bb.undoAction();
         bb.undoAction();
         assertArrayEquals(testPeriodsHistrory.peek(), bb.periodsHistory.peek());
         assertArrayEquals(testSheetHistory.peek(), bb.sheetHistory.peek());
-        assertEquals(300*52 + 800*12 + 0*12, bb.calculateTotalIncome());  
-        assertEquals(70*52 + 450*12 + 12.99*12 + 0*12, bb.calculateTotalOutgoings());        
+        assertEquals(300*52 + 800*12 + 0*1, bb.calculateTotalIncome());  
+        assertEquals(70*1 + 0*1 + 0*1 + 0*1, bb.calculateTotalOutgoings());   
     }
 }

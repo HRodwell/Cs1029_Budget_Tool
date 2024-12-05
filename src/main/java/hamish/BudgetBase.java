@@ -28,37 +28,35 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     JFrame topLevelFrame;  // top-level JFrame
     GridBagConstraints layoutConstraints = new GridBagConstraints(); // used to control layout
    
-    // 
-    boolean undoIsActive = false;
-    public Stack<double[]> sheetHistory = new Stack<>();
-    public Stack<String[]> periodsHistory = new Stack<>();
-    String[] periods = {"Year", "Month", "Week"};
-    Map<String, Integer> periodsMap = Map.of(
+    // initialise some variables
+    boolean undoIsActive = false;                               // keeps the listeners from activating while values are being set during undo
+    public Stack<double[]> sheetHistory = new Stack<>();        // stores record numerical values
+    public Stack<String[]> periodsHistory = new Stack<>();      // stores record of pay periodmvalues
+    Map<String, Integer> periodsMap = Map.of(                   // maps period names to multiplier for calculations
         "Year", 1,
         "Month", 12,
         "Week", 52);
 
     // widgets which may have listeners and/or values
-    private JButton calculateButton;   // Calculate button
-    private JButton undoButton;        // Undo button
-    private JButton exitButton;        // Exit button
-    private JTextField wagesField;     // Wages text field
-    private JTextField loansField;     // Loans text field
-    private JTextField otherInField;     // Other income text field
-    private JTextField foodField;     // Food text field
-    private JTextField rentField;     // Rent text field
-    private JTextField otherOutField;     // Other outgoings text field
-    private JTextField subsField;     // Subscriptions text field
-    private JTextField totalIncomeField; // Total Outgoings field
-    private JTextField totalOutgoingsField; // Total Outgoings field
-    private JTextField netIncomeField; // Total Outgoings field
-    private JComboBox<String> wageCombo;
-    private JComboBox<String> loanCombo;
-    private JComboBox<String> otherInCombo;
-    private JComboBox<String> foodCombo;
-    private JComboBox<String> rentCombo;
-    private JComboBox<String> subsCombo;
-    private JComboBox<String> otherOutCombo;
+    private JButton undoButton;                 // Undo button
+    private JButton exitButton;                 // Exit button
+    private JTextField wagesField;              // Wages text field
+    private JTextField loansField;              // Loans text field
+    private JTextField otherInField;            // Other income text field
+    private JTextField foodField;               // Food text field
+    private JTextField rentField;               // Rent text field
+    private JTextField otherOutField;           // Other outgoings text field
+    private JTextField subsField;               // Subscriptions text field
+    private JTextField totalIncomeField;        // Total Outgoings field
+    private JTextField totalOutgoingsField;     // Total Outgoings field
+    private JTextField netIncomeField;          // Total Outgoings field
+    private JComboBox<String> wageCombo;        // wage period picker
+    private JComboBox<String> loanCombo;        // loan period picker
+    private JComboBox<String> otherInCombo;     // other income period picker
+    private JComboBox<String> foodCombo;        // food period picker
+    private JComboBox<String> rentCombo;        // rent period picker
+    private JComboBox<String> subsCombo;        // subscriptions period picker
+    private JComboBox<String> otherOutCombo;    // other outgoings period picker
 
 
     // constructor - create UI  (dont need to change this)
@@ -72,6 +70,10 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     // Note that this method is quite long.  Can be shortened by putting Action Listener stuff in a separate method
     // will be generated automatically by IntelliJ, Eclipse, etc
     private void initComponents() { 
+
+        // set first state in history to defaults
+        sheetHistory.push(new double[] {0, 0, 0, 0, 0, 0, 0});
+        periodsHistory.push(new String[] {"Year", "Year", "Year", "Year", "Year", "Year", "Year"});
 
         // Top row (0) - "INCOME" label
         JLabel incomeLabel = new JLabel("INCOME");
@@ -176,16 +178,13 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         addComponent(netIncomeField, 11, 1);  
 
         // Row 12 - Calculate and Undo Buttons
-        calculateButton = new JButton("Calculate");
-        addComponent(calculateButton, 12, 0);  
         undoButton = new JButton("Undo");
-        addComponent(undoButton, 12, 1);  
-
-        // Row 13 - Exit Button
+        addComponent(undoButton, 12, 0);  
         exitButton = new JButton("Exit");
-        addComponent(exitButton, 13, 0);  
+        addComponent(exitButton, 12, 1);  
         
         // set up combo boxes for period of each field
+        String[] periods = {"Year", "Month", "Week"};
         wageCombo = createComboBox(periods, 1, 2);
         loanCombo = createComboBox(periods, 2, 2);
         otherInCombo = createComboBox(periods, 3, 2);
@@ -193,20 +192,13 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         rentCombo = createComboBox(periods, 6, 2);
         subsCombo = createComboBox(periods, 7, 2);
         otherOutCombo = createComboBox(periods, 8, 2);
-
-        // set first state in history to defaults
-        sheetHistory.push(new double[] {0, 0, 0, 0, 0, 0, 0});
-        periodsHistory.push(new String[] {"Year", "Year", "Year", "Year", "Year", "Year", "Year"});
-        // periodsHistory.push(new Object[] {wageCombo.getSelectedItem(), loanCombo.getSelectedItem(), otherInCombo.getSelectedItem(), foodCombo.getSelectedItem(), rentCombo.getSelectedItem(), subsCombo.getSelectedItem(), otherOutCombo.getSelectedItem()});
-
-        System.out.println(Arrays.toString(periodsHistory.peek()));
-
+        
         // set up  listeners (in a spearate method)
         initListeners();
     }
 
 
-    // initialise combo box
+    // method for creating combo boxes
     private JComboBox<String> createComboBox(String[] items, int gridx, int gridy) {
         JComboBox<String> comboBox = new JComboBox<>(items); 
         addComponent(comboBox, gridx, gridy);                
@@ -214,7 +206,6 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     }
 
     // set up listeners
-    // initially just for buttons, can add listeners for text fields
     private void initListeners() {
 
         // exitButton - exit program when pressed
@@ -224,36 +215,31 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             }
         });
 
-        // calculateButton - call calculateTotalIncome() when pressed
-        calculateButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateAllTotals();
-            }
-        });
-
-        // undoButton - call calculateTotalIncome() when pressed
+        // undoButton - undo the last action(s)
         undoButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 undoAction();
             }
         });
 
-        
 
         addFieldListeners();
         addComboListeners();
        
     }
 
+    // add the listeners for the text fields
     private void addFieldListeners() {
 
+        // create listener to accept value and update the sheet when enter is pressed
         ActionListener textFieldActionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (!undoIsActive) {
+                if (!undoIsActive) {            // check to see that undo isnt active
                     updateSheet();
                 }
         }};
 
+        // create listener to select all in the field when focus gained and accept value and update sheet when focus lost
         FocusListener textFieldFocuListener = new FocusListener() {
             public void focusGained(FocusEvent e) {
                 JTextField source = (JTextField) e.getSource();
@@ -266,6 +252,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             }
         };
 
+        // add the listeners to the fields
         wagesField.addActionListener(textFieldActionListener);
         wagesField.addFocusListener(textFieldFocuListener);
         loansField.addActionListener(textFieldActionListener);
@@ -283,23 +270,26 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
     }
 
+    // add the listeners for tthe combo boxes
     private void addComboListeners() {
 
+        // create a litener to accept choice and update sheet when an option is selected
         ActionListener periodComboListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (!undoIsActive) {
+                if (!undoIsActive) {            // check to see that undo isnt active
                     updateSheet();
                 }
             }};
 
-        wageCombo.addActionListener(periodComboListener);
-        loanCombo.addActionListener(periodComboListener);
-        otherInCombo.addActionListener(periodComboListener);
-        foodCombo.addActionListener(periodComboListener);
-        rentCombo.addActionListener(periodComboListener);
-        subsCombo.addActionListener(periodComboListener);
-        otherOutCombo.addActionListener(periodComboListener);
-    }
+            // add the listeners to the ComboBoxes
+            wageCombo.addActionListener(periodComboListener);
+            loanCombo.addActionListener(periodComboListener);
+            otherInCombo.addActionListener(periodComboListener);
+            foodCombo.addActionListener(periodComboListener);
+            rentCombo.addActionListener(periodComboListener);
+            subsCombo.addActionListener(periodComboListener);
+            otherOutCombo.addActionListener(periodComboListener);
+        }
 
     // add a component at specified row and column in UI.  (0,0) is top-left corner
     private void addComponent(Component component, int gridrow, int gridcol) {
@@ -309,8 +299,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         add(component, layoutConstraints);
     }
 
-    // update totalIncomeField (eg, when Calculate is pressed)
-    // use double to hold numbers, so user can type fractional amounts such as 134.50
+    // Calculate total income from current values
     public double calculateTotalIncome() {
 
         // get values from income text fields.  valie is NaN if an error occurs
@@ -326,15 +315,13 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
         // otherwise calculate total income and update text field
         double totalIncome = wages * periodMultiplier(wageCombo) + loans * periodMultiplier(loanCombo)+ otherIn * periodMultiplier(otherInCombo);
-        totalIncomeField.setText(String.format("%.2f",totalIncome));  // format with 2 digits after the .
         return totalIncome;
     }
 
-    // update totalOutgoingsField (eg, when Calculate is pressed)
-    // use Object to represent combobox selection
+    // calculate total outgoings from current values
     public double calculateTotalOutgoings() {
 
-        // get values from Outgoings comboboxes.
+        // get values from Outgoings fields
         double food = getTextFieldValue(foodField);
         double rent = getTextFieldValue(rentField);
         double subscriptions = getTextFieldValue(subsField);
@@ -348,7 +335,6 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
         // otherwise calculate total outgoings and update text field
         double totalOutgoings = food * periodMultiplier(foodCombo) + rent * periodMultiplier(rentCombo)+ subscriptions * periodMultiplier(subsCombo) + otherOut * periodMultiplier(otherOutCombo);
-        totalIncomeField.setText(String.format("%.2f",totalOutgoings));  // format with 2 digits after the .
         return totalOutgoings;
     }
 
@@ -364,6 +350,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         totalOutgoingsField.setText(String.format("%.2f",totalOutgoings)); 
         netIncomeField.setText(String.format("%.2f",netIncome)); 
 
+        // set color to red if net total is below 0
         if (netIncome < 0) {
             netIncomeField.setForeground(Color.red);
         }
@@ -372,13 +359,12 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         }
     }
 
-    // update totalIncomeField (eg, when Calculate is pressed)
-    // use double to hold numbers, so user can type fractional amounts such as 134.50
+    // use doubles to read and store values
+    // use strings to represent period choices for easier comparison
     public void updateSheet() {
       
-        System.out.println("updateSheet() called");
-
-        // get values from income text fields.  valie is NaN if an error occurs
+        // get values from  text fields.  valie is NaN if an error occurs
+        // get values from comboboxes
         double wages = getTextFieldValue(wagesField);
         double loans = getTextFieldValue(loansField);
         double otherIn = getTextFieldValue(otherInField);
@@ -394,8 +380,9 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         String subsPeriod = subsCombo.getSelectedItem().toString();
         String otherOutPeriod = otherOutCombo.getSelectedItem().toString();
 
-        double[] sheetState = {wages, loans, otherIn, food, rent, subscriptions, otherOut};                                     // create a snapshot of the board
-        String[] periodsState = {wagePeriod, loanPeriod, otherInPeriod, foodPeriod, rentPeriod, subsPeriod, otherOutPeriod};    // including the combo boxes
+        // create a snapshot of the field and box values
+        double[] sheetState = {wages, loans, otherIn, food, rent, subscriptions, otherOut};                                     
+        String[] periodsState = {wagePeriod, loanPeriod, otherInPeriod, foodPeriod, rentPeriod, subsPeriod, otherOutPeriod};    
 
         // update the sheet to show doubles
         wagesField.setText(String.format("%.2f", sheetState[0]));
@@ -406,54 +393,40 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         subsField.setText(String.format("%.2f", sheetState[5]));
         otherOutField.setText(String.format("%.2f", sheetState[6]));
 
+        // check whether anything has changed and record the snapshot if so
+        // checking numerical values first, then period choices
+        // both parts of snapshot saved if either has changed
         if (!Arrays.equals(sheetState, sheetHistory.peek())) {
             sheetHistory.push(sheetState);
             periodsHistory.push(periodsState);
-            System.out.println("Sheet has changed");
-            System.out.println(periodsHistory.size());
         }
         else {
-            System.out.println("Sheet Unchanged");    
-
             if (!Arrays.equals(periodsState, periodsHistory.peek())) {
-                System.out.println("Periods have changed");;
-                System.out.println(Arrays.toString(periodsState));
-                System.out.println(Arrays.toString(periodsHistory.peek()));
                 sheetHistory.push(sheetState);
                 periodsHistory.push(periodsState);
             }
-
-            // for (int i = 0; i < periodsState.length; i++) {     
-            //     if (periodsState[i] != periodsHistory.peek()[i]) {
-            //         sheetHistory.push(sheetState);
-            //         periodsHistory.push(periodsState);
-            //         break;
-            //     }
-            // }
         }
 
-        // otherwise calculate totals and update text field
+        // calculate all of the totals and display them
         calculateAllTotals();
     }
 
+    // undo the last action(s)
     public void undoAction() {
-        
 
-        undoIsActive = true;
-        System.out.println("Undo action started");
+        undoIsActive = true;        // flag to show that an undo is in progress
 
-        if (sheetHistory.size() > 1) {
+        if (sheetHistory.size() > 1) {      //  check that there is an action to be undone
+
             // Remove the current state
             sheetHistory.pop();
             periodsHistory.pop();
-
-            System.out.println("Popped for undo");
-            System.out.println(periodsHistory.size());
     
-            // Now get the previous state
+            // get the previous state
             double[] previousState = sheetHistory.peek();
             String[] previousPeriods = periodsHistory.peek();
     
+            // inject the previous values back into the fields
             wagesField.setText(String.format("%.2f", previousState[0]));
             loansField.setText(String.format("%.2f", previousState[1]));
             otherInField.setText(String.format("%.2f", previousState[2]));
@@ -462,6 +435,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             subsField.setText(String.format("%.2f", previousState[5]));
             otherOutField.setText(String.format("%.2f", previousState[6]));
     
+            // inject the previous values back into the boxes
             wageCombo.setSelectedItem(previousPeriods[0]);
             loanCombo.setSelectedItem(previousPeriods[1]);
             otherInCombo.setSelectedItem(previousPeriods[2]);
@@ -474,9 +448,9 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             calculateAllTotals();;
         }
         else {
-            JOptionPane.showMessageDialog(topLevelFrame, "There's no more to undo");
+            JOptionPane.showMessageDialog(topLevelFrame, "There's no more to undo");        // if nothing to undo, display a message
         } 
-        undoIsActive = false;
+        undoIsActive = false;       // flag reset when undoAction is finished
     }
 
     
